@@ -2,38 +2,27 @@ spring:
   application:
     name: user-service # This will show in Eureka
 
-  # Database Configuration - H2 for development
+  # Database Configuration
   datasource:
-    url: jdbc:h2:mem:userdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5432/ash7nly_db?currentSchema=user_service
+    username: admin
+    password: password
+    driver-class-name: org.postgresql.Driver
 
   # JPA/Hibernate Configuration
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: user_service
+        format_sql: true
     show-sql: true
-
-  # H2 Console
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true # Often needed for newer Spring Boot versions
 
 server:
   port: 8081 # <--- Changed from 0 to 8081
-
-# Eureka Configuration
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-  instance:
-    prefer-ip-address: true
 
 # Actuator endpoints
 management:
@@ -44,3 +33,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+# Application Configuration
+application:
+  security:
+    jwt:
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      expiration: 86400000 # 1 day

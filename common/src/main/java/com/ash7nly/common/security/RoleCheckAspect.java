@@ -1,9 +1,12 @@
 package com.ash7nly.common.security;
 
+import com.ash7nly.common.enums.UserRole;
+import com.ash7nly.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,29 +18,26 @@ import java.util.List;
 @Component
 public class RoleCheckAspect {
 
-    private final HttpServletRequest request;
+    @Before("@annotation(requiresRole)")
+    public void checkRole(RequiresRole requiresRole) {
+        String currentRoleStr = UserContext.getUserRole();
 
-    public RoleCheckAspect(HttpServletRequest request) {
-        this.request = request;
-    }
-
-    @Around("@annotation(requiresRole)")
-    public Object checkRole(ProceedingJoinPoint joinPoint, RequiresRole requiresRole) throws Throwable {
-        String rolesHeader = request.getHeader("X-USER-ROLES");
-
-        if (rolesHeader == null || rolesHeader.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No roles provided");
+        if (currentRoleStr == null || currentRoleStr.isBlank()) {
+            throw new UnauthorizedException("Access Denied: Missing user role header");
         }
 
-        List<String> userRoles = Arrays.asList(rolesHeader.split(","));
-        List<String> requiredRoles = Arrays.asList(requiresRole.value());
+        try {
+            // Convert String header to Enum
+            UserRole currentRole = UserRole.valueOf(currentRoleStr);
 
-        boolean allowed = userRoles.stream().anyMatch(requiredRoles::contains);
+            // Check if the current role is in the allowed list
+            List<UserRole> allowedRoles = Arrays.asList(requiresRole.value());
 
-        if (!allowed) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission");
+            if (!allowedRoles.contains(currentRole)) {
+                throw new UnauthorizedException("Access Denied: You do not have permission to perform this action");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new UnauthorizedException("Access Denied: Invalid role data");
         }
-
-        return joinPoint.proceed();
     }
 }

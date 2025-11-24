@@ -1,10 +1,11 @@
 package com.ash7nly.common.security;
 
+import com.ash7nly.common.enums.UserRole;
+
 import java.lang.annotation.*;
 
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Documented
 public @interface RequiresRole {
-    String[] value(); // Roles required to access the method
+    UserRole[] value();
 }

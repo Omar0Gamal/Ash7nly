@@ -1,99 +1,93 @@
 package com.ash7nly.apigateway.filter;
 
 import com.ash7nly.apigateway.config.SecurityConfig;
-import com.ash7nly.apigateway.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ash7nly.apigateway.service.JwtService;
+import com.ash7nly.common.constant.Headers;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtGatewayFilterFactory {
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private SecurityConfig securityConfig;
-
+    private final JwtService jwtService;
+    private final SecurityConfig securityConfig;
+    private final ObjectMapper objectMapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> apply() {
         return (request, next) -> {
             String requestPath = request.path();
 
-            System.out.println("JwtGatewayFilter - Processing request: " + requestPath);
-
-            // Check if the route is public
             if (isPublicRoute(requestPath)) {
-                System.out.println("JwtGatewayFilter - Public route detected, allowing request");
                 return next.handle(request);
             }
 
-            // Extract JWT token from Authorization header
             String authHeader = request.headers().firstHeader("Authorization");
-
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                System.out.println("JwtGatewayFilter - Missing or invalid Authorization header");
-                return ServerResponse.status(HttpStatus.UNAUTHORIZED)
-                        .header("Content-Type", "application/json")
-                        .body("{\"error\": \"Missing or invalid Authorization header\"}");
+                log.warn("Missing Authorization header: {}", requestPath);
+                return onError(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header");
             }
 
             String token = authHeader.substring(7);
 
             try {
-                // Validate token
-                if (!jwtUtil.isTokenValid(token)) {
-                    System.out.println("JwtGatewayFilter - Invalid or expired token");
-                    return ServerResponse.status(HttpStatus.UNAUTHORIZED)
-                            .header("Content-Type", "application/json")
-                            .body("{\"error\": \"Invalid or expired token\"}");
+                if (!jwtService.isTokenValid(token)) {
+                    log.warn("Invalid token for path: {}", requestPath);
+                    return onError(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
                 }
 
-                // Extract user information from token
-                String userId = jwtUtil.extractUserId(token);
-                String role = jwtUtil.extractRole(token);
+                String userId = jwtService.extractUserId(token);
+                String role = jwtService.extractRole(token);
 
-                System.out.println("JwtGatewayFilter - Token valid for user: " + userId + ", role: " + role);
-
-                // Add user information to headers for downstream services
                 ServerRequest modifiedRequest = ServerRequest.from(request)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", role)
+                        .header(Headers.USER_ID, userId)
+                        .header(Headers.USER_ROLE, role)
                         .build();
 
                 return next.handle(modifiedRequest);
 
             } catch (Exception e) {
-                System.out.println("JwtGatewayFilter - Token validation failed: " + e.getMessage());
-                return ServerResponse.status(HttpStatus.UNAUTHORIZED)
-                        .header("Content-Type", "application/json")
-                        .body("{\"error\": \"Token validation failed: " + e.getMessage() + "\"}");
+                log.error("Token error: {}", e.getMessage());
+                return onError(HttpStatus.UNAUTHORIZED, "Token validation failed");
             }
         };
     }
 
     private boolean isPublicRoute(String requestPath) {
-        List<String> publicRoutes = securityConfig.getPublicRoutes();
+        if (securityConfig.getPublicRoutes() == null) return false;
+        return securityConfig.getPublicRoutes().stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, requestPath));
+    }
 
-        if (publicRoutes == null || publicRoutes.isEmpty()) {
-            return false;
+    private ServerResponse onError(HttpStatus status, String message) {
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("success", false);
+        errorBody.put("message", message);
+        errorBody.put("status", status.value());
+        errorBody.put("timestamp", System.currentTimeMillis());
+
+        try {
+            String json = objectMapper.writeValueAsString(errorBody);
+            return ServerResponse.status(status)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(json);
+        } catch (JsonProcessingException e) {
+            return ServerResponse.status(status).build();
         }
-
-        for (String pattern : publicRoutes) {
-            if (pathMatcher.match(pattern, requestPath)) {
-                System.out.println("JwtGatewayFilter - Matched public pattern: " + pattern);
-                return true;
-            }
-        }
-
-        return false;
     }
 }
 

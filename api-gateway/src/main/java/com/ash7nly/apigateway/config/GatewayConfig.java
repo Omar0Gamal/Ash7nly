@@ -1,46 +1,51 @@
 package com.ash7nly.apigateway.config;
 
 import com.ash7nly.apigateway.filter.JwtGatewayFilterFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.http;
+import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
+@RequiredArgsConstructor
 public class GatewayConfig {
 
-    @Autowired
-    private JwtGatewayFilterFactory jwtGatewayFilterFactory;
+    private final JwtGatewayFilterFactory jwtGatewayFilterFactory;
 
     @Bean
     public RouterFunction<ServerResponse> gatewayRoutes() {
         return GatewayRouterFunctions.route("user-service")
-                .route(RequestPredicates.path("/api/users/**"), http("lb://USER-SERVICE"))
+                .route(path("/api/auth/**").or(path("/api/users/**")), http("http://localhost:8081"))
                 .filter(jwtGatewayFilterFactory.apply())
                 .build()
-                .and(GatewayRouterFunctions.route("shipment-service")
-                        .route(RequestPredicates.path("/api/shipments/**"), http("lb://SHIPMENT-SERVICE"))
-                        .filter(jwtGatewayFilterFactory.apply())
-                        .build())
-                .and(GatewayRouterFunctions.route("payment-service")
-                        .route(RequestPredicates.path("/api/payments/**"), http("lb://PAYMENT-SERVICE"))
-                        .filter(jwtGatewayFilterFactory.apply())
-                        .build())
+
                 .and(GatewayRouterFunctions.route("delivery-service")
-                        .route(RequestPredicates.path("/api/deliveries/**"), http("lb://DELIVERY-SERVICE"))
+                        .route(path("/api/deliveries/**").or(path("/api/drivers/**")), http("http://localhost:8084"))
                         .filter(jwtGatewayFilterFactory.apply())
                         .build())
+
+                .and(GatewayRouterFunctions.route("shipment-service")
+                        .route(path("/api/shipments/**"), http("http://localhost:8082"))
+                        .filter(jwtGatewayFilterFactory.apply())
+                        .build())
+
+                .and(GatewayRouterFunctions.route("payment-service")
+                        .route(path("/api/payments/**"), http("http://localhost:8083"))
+                        .filter(jwtGatewayFilterFactory.apply())
+                        .build())
+
                 .and(GatewayRouterFunctions.route("notification-service")
-                        .route(RequestPredicates.path("/api/notifications/**"), http("lb://NOTIFICATION-SERVICE"))
+                        .route(path("/api/notifications/**"), http("http://localhost:8085"))
                         .filter(jwtGatewayFilterFactory.apply())
                         .build())
+
                 .and(GatewayRouterFunctions.route("analytics-service")
-                        .route(RequestPredicates.path("/api/analytics/**"), http("lb://ANALYTICS-SERVICE"))
+                        .route(path("/api/analytics/**"), http("http://localhost:8086"))
                         .filter(jwtGatewayFilterFactory.apply())
                         .build());
     }
