@@ -1,7 +1,10 @@
 package com.ash7nly.apigateway.config;
 
 import com.ash7nly.apigateway.filter.JwtGatewayFilterFactory;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,10 +15,13 @@ import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFuncti
 import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
-@RequiredArgsConstructor
 public class GatewayConfig {
-
+    @Autowired
     private final JwtGatewayFilterFactory jwtGatewayFilterFactory;
+
+    public GatewayConfig(JwtGatewayFilterFactory jwtGatewayFilterFactory) {
+        this.jwtGatewayFilterFactory = jwtGatewayFilterFactory;
+    }
 
     @Bean
     public RouterFunction<ServerResponse> gatewayRoutes() {
