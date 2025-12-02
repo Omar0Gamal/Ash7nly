@@ -8,6 +8,7 @@ security:
   public-routes:
     - /api/auth/login
     - /api/auth/register
+    - /api/shipments/health
 spring:
   application:
     name: api-gateway
