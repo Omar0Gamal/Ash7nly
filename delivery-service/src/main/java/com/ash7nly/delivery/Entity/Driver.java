@@ -23,8 +23,7 @@ public class Driver {
     private String vehicleNumber;
     private String licenseNumber;
     private String serviceArea;
-    private boolean is_available;
+    private boolean isAvailable;
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL)
-
-    private List<Delivery> Deliveries;
+    private List<Delivery> deliveries;
 }

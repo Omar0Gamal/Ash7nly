@@ -1,8 +1,9 @@
 package com.ash7nly.delivery.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +20,6 @@ public class Delivery {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long shipmentId;
     private LocalDateTime assignedAt;
     private LocalDateTime acceptedAt;
     private LocalDateTime deliveredAt;
@@ -30,6 +30,9 @@ public class Delivery {
     @JoinColumn(name = "driverId")
     @JsonIgnore
     private Driver driver;
+
+    private Long shipmentId;
+
 
 }
 
