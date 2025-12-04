@@ -62,6 +62,12 @@ public class CRUDService {
         shipment.setActive(false);
         shipmentRepository.save(shipment);
 
+
+        TrackingHistoryEntity history = new TrackingHistoryEntity();
+        history.setShipmentEntity(shipment);
+        history.setShipmentStatus(ShipmentStatus.CANCELLED);
+        trackingHistoryRepository.save(history);
+
         return ShipmentMapper.toCancelResponse(shipment);
     }
 
