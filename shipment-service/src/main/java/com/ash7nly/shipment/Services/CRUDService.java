@@ -10,6 +10,7 @@ import com.ash7nly.shipment.Mapper.ShipmentMapper;
 import com.ash7nly.shipment.Mapper.TrackingMapper;
 import com.ash7nly.shipment.Repository.ShipmentRepository;
 import com.ash7nly.shipment.client.DeliveryServiceClient;
+import com.ash7nly.shipment.client.NotificationServiceClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.ash7nly.shipment.Repository.TrackingHistoryRepository;
@@ -27,13 +28,15 @@ public class CRUDService {
     private final TrackingMapper trackingMapper;
     private final TrackingHistoryRepository trackingHistoryRepository;
     private final DeliveryServiceClient deliveryServiceClient;
+    private final NotificationServiceClient notificationServiceClient;
 
-    public CRUDService(ShipmentRepository shipmentRepository, TrackingMapper trackingMapper , ShipmentMapper shipmentMapper, TrackingHistoryRepository trackingHistoryRepository, DeliveryServiceClient deliveryServiceClient){
+    public CRUDService(ShipmentRepository shipmentRepository, TrackingMapper trackingMapper , ShipmentMapper shipmentMapper, TrackingHistoryRepository trackingHistoryRepository, DeliveryServiceClient deliveryServiceClient, NotificationServiceClient notificationServiceClient){
         this.shipmentRepository =shipmentRepository;
         this.trackingMapper = trackingMapper;
         this.shipmentMapper = shipmentMapper;
         this.trackingHistoryRepository= trackingHistoryRepository;
         this.deliveryServiceClient = deliveryServiceClient;
+        this.notificationServiceClient = notificationServiceClient;
     }
     public TrackShipmentDTO TrackingInfo(String trackingNumber){
         ShipmentEntity shipment = shipmentRepository.findBytrackingNumber(trackingNumber)
@@ -63,6 +66,28 @@ public class CRUDService {
 
         } catch (Exception e) {
             System.err.println("Failed to create delivery: " + e.getMessage());
+        }
+        // Step 4: Send notification via Feign Client
+        try {
+            NotificationRequest notificationRequest = new NotificationRequest(
+                    saved.getCustomerName(),
+                    "test@gmail.com",  // TESTING PURPOSES ONLY
+                    saved.getTrackingNumber(),
+                    String.valueOf(saved.getShipmentId()),
+                    saved.getPackageWeight(),
+                    saved. getPackageDimension(),
+                    saved.getPickupAdress(),
+                    saved.getDeliveryAdress() != null ? saved.getDeliveryAdress().toString() : "Not specified",
+                    saved.getCost()
+            );
+
+            NotificationResponse notificationResponse = notificationServiceClient
+                    .sendShipmentNotification(notificationRequest);
+
+            System.out.println("Notification response: " + notificationResponse.getMessage());
+
+        } catch (Exception e) {
+            System.err.println("Failed to send notification: " + e.getMessage());
         }
 
         return saved ;

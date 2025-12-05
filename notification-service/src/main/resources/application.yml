@@ -2,6 +2,30 @@ spring:
   application:
     name: notification-service
 
+
+  #Thymeleaf Configuration
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+
+# mail service
+
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+          debug: true
+
   # Database Configuration - H2 for development
   datasource:
     url: jdbc:h2:mem:notificationdb
