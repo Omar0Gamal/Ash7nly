@@ -85,9 +85,8 @@ public class DriverMapper {
         if (request.getLicenseNumber() != null && !request. getLicenseNumber(). trim().isEmpty()) {
             existingDriver.setLicenseNumber(request.getLicenseNumber());
         }
-
-        if (request. getServiceArea() != null && !request. getServiceArea().trim().isEmpty()) {
-            existingDriver. setServiceArea(request.getServiceArea());
+        if (request.getServiceArea() != null) {
+            existingDriver.setServiceArea(request.getServiceArea());
         }
 
         if (request.getIsAvailable() != null) {

@@ -1,5 +1,6 @@
 package com.ash7nly. delivery.Entity;
 
+import com.ash7nly.common.enums.DeliveryArea;
 import com.ash7nly.common.enums.VehicleType;
 import com. fasterxml.jackson.annotation. JsonManagedReference;
 import jakarta.persistence.*;
@@ -20,7 +21,7 @@ public class Driver {
     private VehicleType vehicleType;
     private String vehicleNumber;
     private String licenseNumber;
-    private String serviceArea;
+    private DeliveryArea serviceArea;
     private boolean isAvailable;
 
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL)
@@ -31,7 +32,7 @@ public class Driver {
     }
 
     public Driver(Long id, Long userId, VehicleType vehicleType, String vehicleNumber,
-                  String licenseNumber, String serviceArea, boolean isAvailable,
+                  String licenseNumber, DeliveryArea serviceArea, boolean isAvailable,
                   List<Delivery> deliveries) {
         this.id = id;
         this.userId = userId;
@@ -44,7 +45,7 @@ public class Driver {
     }
 
     public Driver(Long userId, VehicleType vehicleType, String vehicleNumber,
-                  String licenseNumber, String serviceArea, boolean isAvailable) {
+                  String licenseNumber,DeliveryArea serviceArea, boolean isAvailable) {
         this.userId = userId;
         this.vehicleType = vehicleType;
         this.vehicleNumber = vehicleNumber;
@@ -73,7 +74,7 @@ public class Driver {
         return licenseNumber;
     }
 
-    public String getServiceArea() {
+    public DeliveryArea getServiceArea() {
         return serviceArea;
     }
 
@@ -105,7 +106,7 @@ public class Driver {
         this.licenseNumber = licenseNumber;
     }
 
-    public void setServiceArea(String serviceArea) {
+    public void setServiceArea(DeliveryArea serviceArea) {
         this.serviceArea = serviceArea;
     }
 
@@ -123,7 +124,7 @@ public class Driver {
         private VehicleType vehicleType;
         private String vehicleNumber;
         private String licenseNumber;
-        private String serviceArea;
+        private DeliveryArea serviceArea;
         private boolean isAvailable = true; // Default value
         private List<Delivery> deliveries;
 
@@ -152,7 +153,7 @@ public class Driver {
             return this;
         }
 
-        public Builder serviceArea(String serviceArea) {
+        public Builder serviceArea(DeliveryArea serviceArea) {
             this.serviceArea = serviceArea;
             return this;
         }

@@ -1,12 +1,15 @@
 package com.ash7nly.delivery;
 
 import com.ash7nly.common.response.ApiResponse;
+import com.ash7nly.common.security.UserContext;
 import com.ash7nly.delivery.Entity.Delivery;
 import com.ash7nly.delivery.Entity.Driver;
 import com.ash7nly.delivery.Services.DeliveryService;
 
+import com.ash7nly.delivery.dto.AssignedShipmentDTO;
 import com.ash7nly.delivery.dto.CreateDeliveryRequest;
 import com.ash7nly.delivery.dto.DeliveryResponse;
+import com.ash7nly.delivery.dto.FailDeliveryRequest;
 import com.ash7nly.delivery.mapper.DeliveryMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,68 +26,50 @@ public class DeliveryController {
         this.deliveryService = deliveryService;
     }
 
-    @GetMapping("/health")
-    public Map<String, String> health() {
-        return Map.of(
-                "service", "delivery-service",
-                "status", "UP"
-        );
-    }
 
+    // Called by shipment-service to create a delivery record when a shipment is created
     @PostMapping("/create")
-    public ApiResponse<DeliveryResponse> createDelivery(@RequestBody CreateDeliveryRequest request) {
-        try {
-            Delivery delivery = DeliveryMapper.toEntity(request);
-
-            Delivery savedDelivery = deliveryService.createDelivery(delivery);
-
-            DeliveryResponse response = DeliveryMapper.toResponse(savedDelivery);
-
-            return ApiResponse.success(response);
-
-        } catch (Exception e) {
-            return ApiResponse.error("Failed to create delivery" + e.getMessage());
-        }
+    public ResponseEntity<ApiResponse<DeliveryResponse>> createFromShipment(@RequestBody CreateDeliveryRequest request) {
+        DeliveryResponse resp = deliveryService.createDeliveryFromShipment(request);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 
+    // Driver requests available shipments (by service area)
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<AssignedShipmentDTO>>> getAvailableForDriver() {
+        Long userId = Long.valueOf(UserContext.getUserId());
+        List<AssignedShipmentDTO> shipments = deliveryService.getAvailableShipmentsForDriver(userId);
+        return ResponseEntity.ok(ApiResponse.success(shipments));
+    }
 
+    // Driver accepts a shipment (assigns the delivery to himself)
+    @PostMapping("/{shipmentId}/accept")
+    public ResponseEntity<ApiResponse<DeliveryResponse>> acceptShipment(@PathVariable Long shipmentId) {
+        Long userId = Long.valueOf(UserContext.getUserId());
+        DeliveryResponse resp = deliveryService.acceptShipment(shipmentId, userId);
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
 
+    // Get deliveries assigned to logged-in driver
     @GetMapping("/assigned")
-    public List<Delivery> assigned(@RequestParam Long driverId) {
-        return deliveryService.getAssignedDeliveries(driverId);
+    public ResponseEntity<ApiResponse<List<DeliveryResponse>>> getAssigned() {
+        Long userId = Long.valueOf(UserContext.getUserId());
+        List<DeliveryResponse> resp = deliveryService.getAssignedDeliveriesForDriver(userId);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 
-
-    @PostMapping("/{id}/accept")
-    public Delivery accept(@PathVariable Long id) {
-        return deliveryService.acceptDelivery(id);
-    }
-
-
-    @PostMapping("/{id}/reject")
-    public Delivery reject(@PathVariable Long id) {
-        return deliveryService.rejectDelivery(id);
-    }
-
-
+    // Update status (delegated to shipment service)
     @PutMapping("/{id}/status")
-    public Delivery updateStatus(@PathVariable Long id, @RequestParam String status) {
-        return deliveryService.updateStatus(id, status);
+    public ResponseEntity<ApiResponse<DeliveryResponse>> updateStatus(@PathVariable Long id, @RequestParam String status) {
+        DeliveryResponse resp = deliveryService.updateDeliveryStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 
-
-
-
-
+    // Report failed
     @PostMapping("/{id}/failed")
-    public Delivery failed(@PathVariable Long id, @RequestParam String reason) {
-        return deliveryService.reportFailed(id, reason);
-    }
-
-
-    @GetMapping("/history")
-    public List<Delivery> history(@RequestParam Long driverId) {
-        return deliveryService.getHistory(driverId);
+    public ResponseEntity<ApiResponse<DeliveryResponse>> reportFailed(@PathVariable Long id, @RequestBody FailDeliveryRequest request) {
+        DeliveryResponse resp = deliveryService.reportFailed(id, request.getReason());
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 }
 

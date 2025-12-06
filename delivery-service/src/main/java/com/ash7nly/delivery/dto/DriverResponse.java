@@ -1,5 +1,6 @@
 package com.ash7nly.delivery.dto;
 
+import com.ash7nly.common.enums.DeliveryArea;
 import com.ash7nly.common.enums.VehicleType;
 import com.fasterxml.jackson. annotation.JsonFormat;
 import java.time.LocalDateTime;
@@ -11,7 +12,7 @@ public class DriverResponse {
     private VehicleType vehicleType;
     private String vehicleNumber;
     private String licenseNumber;
-    private String serviceArea;
+    private DeliveryArea serviceArea;
     private Boolean isAvailable;
     private Integer deliveriesCount;
 
@@ -22,7 +23,7 @@ public class DriverResponse {
     }
 
     public DriverResponse(Long id, Long userId, VehicleType vehicleType, String vehicleNumber,
-                          String licenseNumber, String serviceArea, Boolean isAvailable,
+                          String licenseNumber, DeliveryArea serviceArea, Boolean isAvailable,
                           Integer deliveriesCount, LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
@@ -55,7 +56,7 @@ public class DriverResponse {
         return licenseNumber;
     }
 
-    public String getServiceArea() {
+    public DeliveryArea getServiceArea() {
         return serviceArea;
     }
 
@@ -91,7 +92,7 @@ public class DriverResponse {
         this. licenseNumber = licenseNumber;
     }
 
-    public void setServiceArea(String serviceArea) {
+    public void setServiceArea(DeliveryArea serviceArea) {
         this. serviceArea = serviceArea;
     }
 

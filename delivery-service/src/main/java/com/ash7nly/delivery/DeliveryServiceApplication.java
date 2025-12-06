@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.ash7nly.delivery.clients")
+@EnableFeignClients(basePackages = "com.ash7nly.delivery.client")
 @ComponentScan(basePackages = {
         "com.ash7nly.delivery",
         "com.ash7nly.common"

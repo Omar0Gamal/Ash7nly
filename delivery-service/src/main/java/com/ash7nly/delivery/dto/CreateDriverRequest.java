@@ -1,5 +1,6 @@
 package com.ash7nly.delivery.dto;
 
+import com.ash7nly.common.enums.DeliveryArea;
 import com.ash7nly.common.enums.VehicleType;
 import jakarta. validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +20,7 @@ public class CreateDriverRequest {
     private String licenseNumber;
 
     @NotBlank(message = "Service area cannot be empty")
-    private String serviceArea;
+    private DeliveryArea serviceArea;
 
     private Boolean isAvailable = true;
 
@@ -27,7 +28,7 @@ public class CreateDriverRequest {
     }
 
     public CreateDriverRequest(Long userId, VehicleType vehicleType, String vehicleNumber,
-                               String licenseNumber, String serviceArea, Boolean isAvailable) {
+                               String licenseNumber, DeliveryArea serviceArea, Boolean isAvailable) {
         this. userId = userId;
         this.vehicleType = vehicleType;
         this. vehicleNumber = vehicleNumber;
@@ -52,7 +53,7 @@ public class CreateDriverRequest {
         return licenseNumber;
     }
 
-    public String getServiceArea() {
+    public DeliveryArea getServiceArea() {
         return serviceArea;
     }
 
@@ -76,7 +77,7 @@ public class CreateDriverRequest {
         this.licenseNumber = licenseNumber;
     }
 
-    public void setServiceArea(String serviceArea) {
+    public void setServiceArea(DeliveryArea serviceArea) {
         this.serviceArea = serviceArea;
     }
 
