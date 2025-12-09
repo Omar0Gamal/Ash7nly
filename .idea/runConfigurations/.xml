@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.ash7nly.api-gatway.ServiceRegistryApplication" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
-  </configuration>
-</component>

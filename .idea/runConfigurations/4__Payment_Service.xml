@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="4. Payment Service" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <module name="payment-service" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.ash7nly.payment.PaymentServiceApplication" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
-  </configuration>
-</component>

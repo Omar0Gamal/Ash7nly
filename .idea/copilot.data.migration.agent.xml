@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AgentMigrationStateService">
-    <option name="migrationStatus" value="COMPLETED" />
+    <option name="pendingSessionIds">
+      <option value="4f804507-47fe-40f3-a478-8f40f5f59693" />
+    </option>
+    <option name="pendingTurns">
+      <map>
+        <entry key="4f804507-47fe-40f3-a478-8f40f5f59693">
+          <value>
+            <set>
+              <option value="ef2063da-0a68-4f28-b122-97c9243f386a" />
+              <option value="fbc2997a-4a26-48b3-8d96-6a41be901c92" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <pendingWorkingSetItems>
+      <entry key="4f804507-47fe-40f3-a478-8f40f5f59693">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/resources/application.yml" />
+          <option value="file://$PROJECT_DIR$/src/main/java/com/ash7nly/monolith/config/H2ServerConfig.java" />
+          <option value="file://$PROJECT_DIR$/pom.xml" />
+          <option value="file://$PROJECT_DIR$/README.md" />
+        </set>
+      </entry>
+    </pendingWorkingSetItems>
   </component>
 </project>

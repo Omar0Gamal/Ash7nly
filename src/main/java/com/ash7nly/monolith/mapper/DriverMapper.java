@@ -1,0 +1,58 @@
+package com.ash7nly.monolith.mapper;
+
+import com.ash7nly.monolith.dto.request.CreateDriverRequest;
+import com.ash7nly.monolith.dto.request.UpdateDriverRequest;
+import com.ash7nly.monolith.dto.response.DriverResponse;
+import com.ash7nly.monolith.entity.Driver;
+import com.ash7nly.monolith.entity.User;
+import org.springframework.stereotype.Component;
+
+@Component
+public class DriverMapper {
+
+    public Driver toEntity(CreateDriverRequest request, User user) {
+        Driver driver = new Driver();
+        driver.setUser(user);
+        driver.setVehicleType(request.getVehicleType());
+        driver.setVehicleNumber(request.getVehicleNumber());
+        driver.setLicenseNumber(request.getLicenseNumber());
+        driver.setServiceArea(request.getServiceArea());
+        driver.setAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true);
+        return driver;
+    }
+
+    public DriverResponse toResponse(Driver driver) {
+        if (driver == null) return null;
+
+        DriverResponse response = new DriverResponse();
+        response.setId(driver.getId());
+        response.setUserId(driver.getUser() != null ? driver.getUser().getId() : null);
+        response.setVehicleType(driver.getVehicleType());
+        response.setVehicleNumber(driver.getVehicleNumber());
+        response.setLicenseNumber(driver.getLicenseNumber());
+        response.setServiceArea(driver.getServiceArea());
+        response.setIsAvailable(driver.isAvailable());
+        response.setDeliveriesCount(driver.getDeliveries() != null ? driver.getDeliveries().size() : 0);
+        response.setCreatedAt(driver.getCreatedAt());
+        return response;
+    }
+
+    public void updateEntityFromRequest(Driver driver, UpdateDriverRequest request) {
+        if (request.getVehicleType() != null) {
+            driver.setVehicleType(request.getVehicleType());
+        }
+        if (request.getVehicleNumber() != null && !request.getVehicleNumber().isBlank()) {
+            driver.setVehicleNumber(request.getVehicleNumber());
+        }
+        if (request.getLicenseNumber() != null && !request.getLicenseNumber().isBlank()) {
+            driver.setLicenseNumber(request.getLicenseNumber());
+        }
+        if (request.getServiceArea() != null && !request.getServiceArea().isBlank()) {
+            driver.setServiceArea(request.getServiceArea());
+        }
+        if (request.getIsAvailable() != null) {
+            driver.setAvailable(request.getIsAvailable());
+        }
+    }
+}
+

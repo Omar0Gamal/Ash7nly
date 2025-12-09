@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Ash7nly (Production)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="ash7nly-parent" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.ash7nly.monolith.MonolithApplication" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.ash7nly.monolith.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
