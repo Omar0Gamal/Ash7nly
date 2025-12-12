@@ -2,6 +2,7 @@ package com.ash7nly.monolith.dto.request;
 
 public class CancelShipmentRequestDto {
     private String cancellationReason;
+    private long id;
 
     public String getCancellationReason() {
         return cancellationReason;
@@ -11,14 +12,11 @@ public class CancelShipmentRequestDto {
         this.cancellationReason = cancellationReason;
     }
 
-    public String getTrackingNumber() {
-        return trackingNumber;
+    public long getId() {
+        return id;
     }
 
-    public void setTrackingNumber(String trackingNumber) {
-        this.trackingNumber = trackingNumber;
+    public void setId(long id) {
+        this.id = id;
     }
-
-    private String trackingNumber;
-
 }

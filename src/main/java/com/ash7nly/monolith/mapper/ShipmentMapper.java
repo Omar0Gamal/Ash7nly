@@ -47,7 +47,7 @@ public class ShipmentMapper {
         shipment.setCustomerEmail(entity.getCustomerEmail());
         shipment.setCost(entity.getCost());
         shipment.setStatus(entity.getStatus());
-        shipment.setTrackingNumber(trackingMapper.generateTrackingCode());
+        shipment.setTrackingNumber(entity.getTrackingNumber());
         shipment.setActive(true);
         shipment.setShipmentId(entity.getShipmentId());
 
@@ -56,6 +56,7 @@ public class ShipmentMapper {
     public static CancelShipmentResponseDto toCancelResponse(ShipmentEntity shipment) {
 
         CancelShipmentResponseDto dto = new CancelShipmentResponseDto();
+        dto.setId(shipment.getShipmentId());
         dto.setTrackingNumber(shipment.getTrackingNumber());
         dto.setStatus(shipment.getStatus().name());
         dto.setMessage("Shipment cancelled successfully");
