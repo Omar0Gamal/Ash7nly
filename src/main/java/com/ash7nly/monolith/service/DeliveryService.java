@@ -175,7 +175,7 @@ public class DeliveryService {
         shipmentRepository.save(shipment);
 
         try {
-            String customerEmail = shipment.getCustomerEmail();
+            String customerEmail = shipment.getCustomerEmail() != null ? shipment.getCustomerEmail() : "test@test.com";
             notificationService.sendStatusUpdateNotification(delivery, customerEmail);
         } catch (Exception e) {
             System.err.println(" Warning: Failed to send status update email:  " + e.getMessage());

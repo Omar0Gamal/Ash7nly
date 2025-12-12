@@ -5,12 +5,11 @@ import com.ash7nly.monolith.dto.request.ShipmentListDTO;
 import com.ash7nly.monolith.dto.request.UpdateShipmentDTO;
 import com.ash7nly.monolith.dto.response.CancelShipmentResponseDto;
 import com.ash7nly.monolith.entity.ShipmentEntity;
-import com.ash7nly.monolith.enums.DeliveryArea;
 import com.ash7nly.monolith.enums.ShipmentStatus;
 import com.ash7nly.monolith.exception.ForbiddenException;
 import org.springframework.stereotype.Component;
 
-@Component   // <<< ADD THIS
+@Component
 public class ShipmentMapper {
     private final TrackingMapper trackingMapper;
     public ShipmentMapper(TrackingMapper trackingMapper){
