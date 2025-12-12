@@ -49,9 +49,9 @@ public class ShipmentController {
         return ApiResponse.success(ShipmentService.cancelShipment(request));
     }
 
-    @GetMapping("/{trackingNumber}/history")
-    public ApiResponse<List<TrackingHistoryDTO>> getTrackingHistory(@PathVariable String trackingNumber) {
-        return ApiResponse.success(ShipmentService.getTrackingHistory(trackingNumber));
+    @GetMapping("/{id}/history")
+    public ApiResponse<List<TrackingHistoryDTO>> getTrackingHistory(@PathVariable long id) {
+        return ApiResponse.success(ShipmentService.getTrackingHistory(id));
     }
 
     @GetMapping("/area/{serviceArea}")

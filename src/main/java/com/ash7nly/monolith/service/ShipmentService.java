@@ -83,7 +83,7 @@ public class ShipmentService {
 
 
     public CancelShipmentResponseDto cancelShipment(CancelShipmentRequestDto request) {
-        ShipmentEntity shipment = shipmentRepository.findBytrackingNumber(request.getTrackingNumber())
+        ShipmentEntity shipment = shipmentRepository.findByShipmentId(request.getId())
                 .orElseThrow(() -> new NotFoundException(
                         "ShipmentEntity Not found"));
 
@@ -124,9 +124,9 @@ public class ShipmentService {
 
     }
 
-    public List<TrackingHistoryDTO> getTrackingHistory(String trackingNumber) {
+    public List<TrackingHistoryDTO> getTrackingHistory(long id) {
 
-        ShipmentEntity shipment = shipmentRepository.findBytrackingNumber(trackingNumber)
+        ShipmentEntity shipment = shipmentRepository.findByShipmentId(id)
                 .orElseThrow(() -> new NotFoundException("ShipmentEntity not found"));
 
         return trackingHistoryRepository.findByShipmentEntityOrderByTimestampAsc(shipment)
