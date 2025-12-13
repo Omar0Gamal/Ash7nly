@@ -3,6 +3,8 @@ package com.ash7nly.monolith.mapper;
 
 import com.ash7nly.monolith.dto.request.TrackShipmentDTO;
 import com.ash7nly.monolith.dto.request.TrackingHistoryDTO;
+import com.ash7nly.monolith.entity.Delivery;
+import com.ash7nly.monolith.entity.Driver;
 import com.ash7nly.monolith.entity.ShipmentEntity;
 import com.ash7nly.monolith.entity.TrackingHistoryEntity;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,7 @@ public class TrackingMapper {
 
     public TrackingHistoryDTO toDTO(TrackingHistoryEntity history) {
         TrackingHistoryDTO dto = new TrackingHistoryDTO();
+
         dto.setStatus(history.getShipmentStatus());
         dto.setTimestamp(history.getTimestamp());
         return dto;

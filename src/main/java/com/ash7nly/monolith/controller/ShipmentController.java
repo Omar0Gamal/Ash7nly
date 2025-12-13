@@ -50,7 +50,7 @@ public class ShipmentController {
     }
 
     @GetMapping("/{id}/history")
-    public ApiResponse<List<TrackingHistoryDTO>> getTrackingHistory(@PathVariable long id) {
+    public ApiResponse<ShipmentTrackingDTO> getTrackingHistory(@PathVariable long id) {
         return ApiResponse.success(ShipmentService.getTrackingHistory(id));
     }
 
