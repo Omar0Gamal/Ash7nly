@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Gateway Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="ash7nly-gateway" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.ash7nly.gateway.GatewayApplication" />
+    <option name="ACTIVE_PROFILES" value="" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <envs>
+      <env name="BACKEND_URL" value="http://localhost:8080" />
+      <env name="FRONTEND_URL" value="http://localhost:3000" />
+      <env name="SERVER_PORT" value="9000" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
+

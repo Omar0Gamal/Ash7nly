@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="ash7nly-backend" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.ash7nly.monolith.MonolithApplication" />
+    <option name="ACTIVE_PROFILES" value="dev" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

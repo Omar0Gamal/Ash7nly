@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: ash7nly-gateway
+
+  cloud:
+    gateway:
+      metrics:
+        enabled: true
+      routes:
+        - id: backend-api
+          uri: ${BACKEND_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/**
+          filters:
+            - AddResponseHeader=X-Response-From, Gateway
+            - PreserveHostHeader
+        - id: backend-actuator
+          uri: ${BACKEND_URL:http://localhost:8080}
+          predicates:
+            - Path=/actuator/**
+          filters:
+            - AddResponseHeader=X-Response-From, Gateway
+        - id: frontend
+          uri: ${FRONTEND_URL:http://localhost:3000}
+          predicates:
+            - Path=/**
+          filters:
+            - AddResponseHeader=X-Response-From, Gateway
+      default-filters:
+        - AddResponseHeader=X-Gateway-Version, 1.0.0
+
+
+server:
+  port: ${SERVER_PORT:80}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    gateway:
+      routes:
+        - id: backend-api
+          uri: http://backend:8080
+          predicates:
+            - Path=/api/**
+          filters:
+            - AddResponseHeader=X-Response-From, Gateway
+            - PreserveHostHeader
+
+        - id: backend-actuator
+          uri: http://backend:8080
+          predicates:
+            - Path=/actuator/**
+          filters:
+            - AddResponseHeader=X-Response-From, Gateway
+
+        - id: frontend
+          uri: http://frontend:80
+          predicates:
+            - Path=/**
+          filters:
+            - AddResponseHeader=X-Response-From, Gateway

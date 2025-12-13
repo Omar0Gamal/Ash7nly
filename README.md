@@ -1,83 +1,119 @@
 # Ash7nly - Delivery Management Application
 
-A monolithic Spring Boot application for delivery management with JWT authentication and role-based access control.
+A **multi-module** Spring Boot application for delivery management with:
+- **Spring Cloud Gateway** as single entry point
+- **Spring Boot Backend** monolith with JWT authentication
+- **React Frontend** (placeholder - to be added)
+- **PostgreSQL** database
 
-## Features
+## Architecture
 
-- **User Management**: Registration, login, profile management
-- **Shipment Management**: Create, track, and cancel shipments
-- **Driver Management**: Driver profiles and availability
-- **Delivery Management**: Assign and track deliveries
-- **JWT Authentication**: Secure API endpoints with JWT tokens
-- **Role-Based Access Control**: ADMIN, MERCHANT, DRIVER, CUSTOMER roles
+```
+                    ┌─────────────────────────────────────────────────────┐
+                    │                    DOCKER COMPOSE                   │
+                    │                                                     │
+   HTTP :80         │  ┌─────────────┐      ┌─────────────┐              │
+────────────────────┼─►│   Gateway   │─────►│  Frontend   │              │
+                    │  │  (Port 80)  │      │   (Nginx)   │              │
+                    │  └─────────────┘      └─────────────┘              │
+                    │         │                                          │
+                    │         │ /api/**                                  │
+                    │         ▼                                          │
+                    │  ┌─────────────┐      ┌─────────────┐              │
+                    │  │   Backend   │─────►│  PostgreSQL │              │
+                    │  │ (Port 8080) │      │ (Port 5432) │              │
+                    │  └─────────────┘      └─────────────┘              │
+                    │                                                     │
+                    └─────────────────────────────────────────────────────┘
+```
 
 ## Project Structure
 
 ```
 ash7nly/
-├── pom.xml
-├── mvnw, mvnw.cmd
-├── src/main/java/com/ash7nly/monolith/
-│   ├── MonolithApplication.java      # Main entry point
-│   ├── config/                       # Security & App configuration
-│   ├── controller/                   # REST API controllers
-│   ├── dto/                          # Data Transfer Objects
-│   ├── entity/                       # JPA entities
-│   ├── enums/                        # Enumerations
-│   ├── exception/                    # Exception handling
-│   ├── mapper/                       # Entity-DTO mappers
-│   ├── repository/                   # JPA repositories
-│   ├── security/                     # JWT & auth services
-│   └── service/                      # Business logic
-└── src/main/resources/
-    └── application.yml               # Configuration
+├── pom.xml                    # Parent POM (multi-module)
+├── docker-compose.yml         # Docker orchestration
+├── backend/                   # Spring Boot monolith
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/main/java/com/ash7nly/monolith/
+│       ├── MonolithApplication.java
+│       ├── config/            # Security & App configuration
+│       ├── controller/        # REST API controllers
+│       ├── dto/               # Data Transfer Objects
+│       ├── entity/            # JPA entities
+│       ├── enums/             # Enumerations
+│       ├── exception/         # Exception handling
+│       ├── mapper/            # Entity-DTO mappers
+│       ├── repository/        # JPA repositories
+│       ├── security/          # JWT & auth services
+│       └── service/           # Business logic
+├── gateway/                   # Spring Cloud Gateway
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/main/java/com/ash7nly/gateway/
+│       └── GatewayApplication.java
+└── frontend/                  # React application (placeholder)
+    ├── pom.xml
+    ├── Dockerfile
+    ├── nginx.conf
+    └── README.md
 ```
 
-## Running the Application
+## Quick Start
 
-### Prerequisites
-- Java 21
-- PostgreSQL (or use H2 for development)
-- Maven (or use included wrapper)
+### Using Docker Compose (Recommended)
 
-### Development Mode (H2 Database)
 ```bash
-# Windows - Set profile then run
+# Build and start all services
+docker-compose up --build
+
+# Access the application
+# - Frontend: http://localhost
+# - API:      http://localhost/api/health
+# - Backend:  http://localhost/api/**
+```
+
+### Development Mode (Individual Services)
+
+#### 1. Start Backend
+```powershell
+cd backend
 $env:SPRING_PROFILES_ACTIVE="dev"
 .\mvnw.cmd spring-boot:run
-
-# Or use IntelliJ Run Configuration: "Ash7nly Application"
 ```
 
-#### Accessing H2 Database
-
-**Option 1: H2 Web Console**
-- URL: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:ash7nly_db`
-- Username: `sa`
-- Password: `password`
-
-**Option 2: DBeaver / External Tools (TCP Server)**
-- Driver: H2 Server
-- Host: `localhost`
-- Port: `9092`
-- Database: `mem:ash7nly_db`
-- URL: `jdbc:h2:tcp://localhost:9092/mem:ash7nly_db`
-- Username: `sa`
-- Password: `password`
-
-### Production Mode (PostgreSQL)
-1. Configure PostgreSQL connection in `application.yml`
-2. Run:
-```bash
+#### 2. Start Gateway (Optional for local dev)
+```powershell
+cd gateway
+$env:BACKEND_URL="http://localhost:8080"
+$env:FRONTEND_URL="http://localhost:3000"
+$env:SERVER_PORT="9000"
 .\mvnw.cmd spring-boot:run
 ```
 
-### Building
+### Build All Modules
 ```bash
-.\mvnw.cmd clean package
-java -jar target/ash7nly-1.0-SNAPSHOT.jar
+# From root directory
+.\mvnw.cmd clean package -DskipTests
 ```
+
+## Services
+
+| Service   | Internal Port | External Port | Description                    |
+|-----------|---------------|---------------|--------------------------------|
+| Gateway   | 80            | 80            | Single entry point, routing    |
+| Backend   | 8080          | -             | REST APIs, business logic      |
+| Frontend  | 80            | -             | React SPA (via Nginx)          |
+| PostgreSQL| 5432          | 5432          | Database                       |
+
+## Gateway Routes
+
+| Path        | Destination                | Description              |
+|-------------|----------------------------|--------------------------|
+| `/api/**`   | `http://backend:8080`      | Backend REST APIs        |
+| `/actuator/**` | `http://backend:8080`   | Health checks, metrics   |
+| `/**`       | `http://frontend:80`       | React frontend           |
 
 ## API Endpoints
 
@@ -91,9 +127,9 @@ java -jar target/ash7nly-1.0-SNAPSHOT.jar
 - `GET /api/users/{id}` - Get user by ID (Admin only)
 
 ### Shipments
-- `POST /api/shipments` - Create shipmentEntity (Merchant only)
-- `GET /api/shipments/tracking/{trackingNumber}` - Track shipmentEntity (Public)
-- `POST /api/shipments/cancel` - Cancel shipmentEntity
+- `POST /api/shipments` - Create shipment (Merchant only)
+- `GET /api/shipments/tracking/{trackingNumber}` - Track shipment (Public)
+- `POST /api/shipments/cancel` - Cancel shipment
 - `GET /api/shipments/my-shipments` - Get merchant's shipments
 
 ### Drivers
@@ -113,12 +149,12 @@ java -jar target/ash7nly-1.0-SNAPSHOT.jar
 
 ## User Roles
 
-| Role | Description |
-|------|-------------|
-| ADMIN | Full system access |
-| MERCHANT | Can create and manage shipments |
-| DRIVER | Can view and update assigned deliveries |
-| CUSTOMER | Can track shipments |
+| Role     | Description                              |
+|----------|------------------------------------------|
+| ADMIN    | Full system access                       |
+| MERCHANT | Can create and manage shipments          |
+| DRIVER   | Can view and update assigned deliveries  |
+| CUSTOMER | Can track shipments                      |
 
 ## Authentication
 
@@ -156,18 +192,69 @@ Authorization: Bearer <token>
 
 ## Configuration
 
-Key settings in `application.yml`:
+### Environment Variables
 
-```yaml
-# Server
-server.port: 8080
+| Variable       | Default                    | Description              |
+|----------------|----------------------------|--------------------------|
+| `DB_HOST`      | `localhost`                | Database host            |
+| `DB_PORT`      | `5432`                     | Database port            |
+| `DB_NAME`      | `ash7nly_db`               | Database name            |
+| `DB_USERNAME`  | `admin`                    | Database username        |
+| `DB_PASSWORD`  | `password`                 | Database password        |
+| `JWT_SECRET`   | (default key)              | JWT signing key          |
+| `JWT_EXPIRATION` | `86400000`               | JWT expiration (ms)      |
 
-# Database (PostgreSQL)
-spring.datasource.url: jdbc:postgresql://localhost:5432/ash7nly_db
-spring.datasource.username: admin
-spring.datasource.password: password
+### Database Access (Development)
 
-# JWT
-application.security.jwt.secret-key: <your-secret-key>
-application.security.jwt.expiration: 86400000  # 1 day
+**Option 1: H2 Web Console** (dev profile)
+- URL: http://localhost:8080/h2-console
+- JDBC URL: `jdbc:h2:mem:ash7nly_db`
+- Username: `sa`
+- Password: `password`
+
+**Option 2: PostgreSQL** (Docker)
+- Host: `localhost`
+- Port: `5432`
+- Database: `ash7nly_db`
+- Username: `admin`
+- Password: `password`
+
+## IntelliJ Run Configurations
+
+The project includes pre-configured run configurations:
+- **Backend Application** - Run backend with `dev` profile
+- **Gateway Application** - Run gateway pointing to local backend
+- **Docker Compose - Full Stack** - Run all services with Docker
+
+## Docker Commands
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Start in background
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f backend
+docker-compose logs -f gateway
+
+# Stop all services
+docker-compose down
+
+# Clean up volumes
+docker-compose down -v
 ```
+
+## Adding Frontend
+
+1. Navigate to `frontend/` folder
+2. Create React app:
+   ```bash
+   npx create-react-app . --template typescript
+   ```
+3. Update `frontend/Dockerfile` for production build
+4. Rebuild with Docker Compose
+
+See `frontend/README.md` for detailed instructions.
+

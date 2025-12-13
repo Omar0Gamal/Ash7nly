@@ -2,73 +2,12 @@
 <project version="4">
   <component name="AgentMigrationStateService">
     <option name="migrationStatus" value="IN_PROGRESS" />
-    <option name="pendingSessionIds">
-      <option value="2d83bc3c-b9f8-4cae-b5d3-8d4bc342cd35" />
-      <option value="33d7a3c5-67e6-4e2a-b236-35e005bc57c8" />
-      <option value="3e476afe-dfe0-46ee-b2f6-c35eafb0a873" />
-      <option value="49b2d063-7785-4d65-9b2c-4b565a433c2f" />
-      <option value="4f804507-47fe-40f3-a478-8f40f5f59693" />
-      <option value="867f0937-4048-4cd6-9cb9-8fabaacb53b2" />
-      <option value="f0162733-cc03-4d4d-ad1b-c9ed394d0c8f" />
-      <option value="f8d6c62b-dbb3-4f6f-8071-9f4269346208" />
-    </option>
-    <option name="pendingTurns">
-      <map>
-        <entry key="2d83bc3c-b9f8-4cae-b5d3-8d4bc342cd35">
-          <value>
-            <set>
-              <option value="33bd9841-edf3-4930-9427-377fca3178e7" />
-            </set>
-          </value>
-        </entry>
-        <entry key="33d7a3c5-67e6-4e2a-b236-35e005bc57c8">
-          <value>
-            <set>
-              <option value="99d12a9d-739c-48cb-9b54-5dac1548e383" />
-              <option value="e78bc116-bd48-42ab-b011-b43c14352bbc" />
-            </set>
-          </value>
-        </entry>
-        <entry key="49b2d063-7785-4d65-9b2c-4b565a433c2f">
-          <value>
-            <set>
-              <option value="a58153a7-91f4-418f-989f-92695f1b3b8a" />
-              <option value="97325779-3f94-4234-a0b2-5270a81755ce" />
-              <option value="e8494a2a-e257-46ab-88ef-fc34299103ae" />
-            </set>
-          </value>
-        </entry>
-        <entry key="4f804507-47fe-40f3-a478-8f40f5f59693">
-          <value>
-            <set>
-              <option value="ef2063da-0a68-4f28-b122-97c9243f386a" />
-              <option value="fbc2997a-4a26-48b3-8d96-6a41be901c92" />
-            </set>
-          </value>
-        </entry>
-        <entry key="867f0937-4048-4cd6-9cb9-8fabaacb53b2">
-          <value>
-            <set>
-              <option value="16e04e02-8e0a-4be1-ba46-44d6b03d1580" />
-              <option value="3f9c52ee-aff6-41eb-a5dd-9868e3531867" />
-              <option value="6771299b-a052-40f3-9ab3-ec6b07c0f2ce" />
-              <option value="a03aa405-f39f-4031-95f5-5eed1aefa588" />
-              <option value="d2415559-5afc-4385-87e7-f5563ce52316" />
-              <option value="f06deb9f-af9e-4a79-9750-1be5763a2975" />
-            </set>
-          </value>
-        </entry>
-      </map>
-    </option>
     <pendingWorkingSetItems>
       <entry key="2d83bc3c-b9f8-4cae-b5d3-8d4bc342cd35" />
-      <entry key="33d7a3c5-67e6-4e2a-b236-35e005bc57c8">
-        <set>
-          <option value="file://$PROJECT_DIR$/Ash7nly-API.postman_collection.json" />
-        </set>
-      </entry>
+      <entry key="33d7a3c5-67e6-4e2a-b236-35e005bc57c8" />
       <entry key="4f804507-47fe-40f3-a478-8f40f5f59693" />
       <entry key="867f0937-4048-4cd6-9cb9-8fabaacb53b2" />
+      <entry key="eecc58b2-2310-4844-86cd-801b24b2ce5d" />
     </pendingWorkingSetItems>
   </component>
 </project>

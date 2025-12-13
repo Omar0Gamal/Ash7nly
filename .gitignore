@@ -1,7 +1,3 @@
-# ============================================
-# Global .gitignore for Ash7nly Microservices
-# ============================================
-
 # Maven
 target/
 !.mvn/wrapper/maven-wrapper.jar

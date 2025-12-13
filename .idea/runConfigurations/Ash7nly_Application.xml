@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Ash7nly Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="dev" />
-    <module name="ash7nly-parent" />
+    <module name="ash7nly-backend" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.ash7nly.monolith.MonolithApplication" />
     <extension name="coverage">
       <pattern>

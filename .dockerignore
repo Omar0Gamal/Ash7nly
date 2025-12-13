@@ -1,0 +1,37 @@
+Thumbs.db
+.DS_Store
+# OS files
+
+*.env.local
+.env
+# Environment files (should not be included in images)
+
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+# Docker
+
+!README.md
+*.md
+# Documentation
+
+logs/
+*.log
+# Logs
+
+**/node_modules/
+node_modules/
+**/target/
+target/
+# Build directories
+
+.vscode
+*.iml
+.idea
+# IDE
+
+.gitignore
+.git
+# Git
+*.bak
+*.tmp

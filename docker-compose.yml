@@ -1,0 +1,118 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ash7nly-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ash7nly_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d ash7nly_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ash7nly-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: ash7nly-backend
+    restart: unless-stopped
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=ash7nly_db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=password
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - JWT_EXPIRATION=86400000
+
+    expose:
+      - "8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    networks:
+      - ash7nly-network
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: ash7nly-gateway
+    restart: unless-stopped
+
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=80
+      - BACKEND_URL=http://backend:8080
+      - FRONTEND_URL=http://frontend:80
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    networks:
+      - ash7nly-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ash7nly-frontend
+    restart: unless-stopped
+
+    expose:
+      - "80"
+
+    depends_on:
+      - gateway
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - ash7nly-network
+
+networks:
+  ash7nly-network:
+    driver: bridge
+    name: ash7nly-network
+
+volumes:
+  postgres_data:
+    name: ash7nly-postgres-data
+
