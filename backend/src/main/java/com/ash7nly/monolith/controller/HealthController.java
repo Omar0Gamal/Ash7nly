@@ -17,29 +17,4 @@ public class HealthController {
                 "status", "UP"
         );
     }
-
-    @GetMapping("/payments/health")
-    public Map<String, String> paymentsHealth() {
-        return Map.of(
-                "module", "payments",
-                "status", "UP"
-        );
-    }
-
-    @GetMapping("/notifications/health")
-    public Map<String, String> notificationsHealth() {
-        return Map.of(
-                "module", "notifications",
-                "status", "UP"
-        );
-    }
-
-    @GetMapping("/analytics/health")
-    public Map<String, String> analyticsHealth() {
-        return Map.of(
-                "module", "analytics",
-                "status", "UP"
-        );
-    }
 }
-

@@ -3,78 +3,94 @@ package com.ash7nly.monolith.service;
 import com.ash7nly.monolith.dto.request.ProcessPaymentRequest;
 import com.ash7nly.monolith.dto.response.PaymentResponse;
 import com.ash7nly.monolith.entity.Payment;
-import com.ash7nly.monolith.entity.ShipmentEntity;
+import com.ash7nly.monolith.entity.Shipment;
 import com.ash7nly.monolith.enums.PaymentStatus;
+import com.ash7nly.monolith.exception.ForbiddenException;
 import com.ash7nly.monolith.exception.NotFoundException;
+import com.ash7nly.monolith.exception.PaymentAlreadyProcessedException;
 import com.ash7nly.monolith.repository.PaymentRepository;
 import com.ash7nly.monolith.repository.ShipmentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ash7nly.monolith.security.CurrentUserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
+
+    private static final String TRANSACTION_PREFIX = "TXN-";
+    private static final int CARD_LAST_DIGITS_LENGTH = 4;
 
     private final PaymentRepository paymentRepository;
     private final ShipmentRepository shipmentRepository;
+    private final CurrentUserService currentUserService;
 
-    @Autowired
-    public PaymentService(PaymentRepository paymentRepository, ShipmentRepository shipmentRepository) {
-        this.paymentRepository = paymentRepository;
-        this.shipmentRepository = shipmentRepository;
-    }
-
-    /**
-     * Creates a payment record for a shipment. Called when a shipment is created.
-     */
     @Transactional
-    public Payment createPaymentForShipment(ShipmentEntity shipment) {
+    public Payment createPaymentForShipment(Shipment shipment) {
         Payment payment = new Payment();
         payment.setShipment(shipment);
         payment.setAmount(shipment.getCost());
         payment.setStatus(PaymentStatus.PENDING);
-        return paymentRepository.save(payment);
+
+        Payment saved = paymentRepository.save(payment);
+        log.info("Payment created for shipment: {}", shipment.getTrackingNumber());
+        return saved;
     }
 
-    /**
-     * Get payment details by payment ID
-     */
-    public PaymentResponse getPaymentById(Long paymentId) {
+    public PaymentResponse getPaymentById(Long paymentId, Long merchantId) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NotFoundException("Payment not found with ID: " + paymentId));
-        return toPaymentResponse(payment);
-    }
+                .orElseThrow(() -> new NotFoundException("Payment not found with id: " + paymentId));
 
-    /**
-     * Get payment by shipment ID
-     */
-    public PaymentResponse getPaymentByShipmentId(Long shipmentId) {
-        Payment payment = paymentRepository.findByShipment_ShipmentId(shipmentId)
-                .orElseThrow(() -> new NotFoundException("Payment not found for shipment ID: " + shipmentId));
-        return toPaymentResponse(payment);
-    }
-
-    /**
-     * Process payment - fakes a transaction and marks shipment as paid
-     */
-    @Transactional
-    public PaymentResponse processPayment(ProcessPaymentRequest request) {
-        Payment payment = paymentRepository.findById(request.getPaymentId())
-                .orElseThrow(() -> new NotFoundException("Payment not found with ID: " + request.getPaymentId()));
-
-        // Check if payment is already completed
-        if (payment.getStatus() == PaymentStatus.COMPLETED) {
-            throw new RuntimeException("Payment has already been processed");
+        if (!currentUserService.isAdmin()) {
+            Shipment shipment = payment.getShipment();
+            if (!shipment.getMerchant().getId().equals(merchantId)) {
+                throw new ForbiddenException("Access denied: payment not owned by you");
+            }
         }
 
-        // Fake transaction processing - simulate a successful payment
-        String transactionId = generateTransactionId();
-        String lastFourDigits = request.getCardNumber().substring(request.getCardNumber().length() - 4);
+        return toPaymentResponse(payment);
+    }
 
-        // Update payment status
+    @Transactional(readOnly = true)
+    public PaymentResponse getPaymentByShipmentId(Long shipmentId, Long merchantId) {
+        Payment payment = paymentRepository.findByShipment_ShipmentId(shipmentId)
+                .orElseThrow(() -> new NotFoundException("Payment not found for shipment id: " + shipmentId));
+
+        if (!currentUserService.isAdmin()) {
+            Shipment shipment = payment.getShipment();
+            if (!shipment.getMerchant().getId().equals(merchantId)) {
+                throw new ForbiddenException("Access denied: payment not owned by you");
+            }
+        }
+
+        return toPaymentResponse(payment);
+    }
+
+    @Transactional
+    public PaymentResponse processPayment(Long paymentId, ProcessPaymentRequest request, Long merchantId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new NotFoundException("Payment not found with id: " + paymentId));
+
+        if (!currentUserService.isAdmin()) {
+            Shipment shipment = payment.getShipment();
+            if (!shipment.getMerchant().getId().equals(merchantId)) {
+                throw new ForbiddenException("Access denied: payment not owned by you");
+            }
+        }
+
+        if (payment.getStatus() == PaymentStatus.COMPLETED) {
+            throw new PaymentAlreadyProcessedException(paymentId);
+        }
+
+        String transactionId = generateTransactionId();
+        String lastFourDigits = extractLastFourDigits(request.getCardNumber());
+
         payment.setStatus(PaymentStatus.COMPLETED);
         payment.setTransactionId(transactionId);
         payment.setCardLastFourDigits(lastFourDigits);
@@ -82,36 +98,35 @@ public class PaymentService {
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        // Mark shipment as paid/active so drivers can see it
-        ShipmentEntity shipment = payment.getShipment();
+        Shipment shipment = payment.getShipment();
         shipment.setActive(true);
         shipmentRepository.save(shipment);
+
+        log.info("Payment {} processed successfully for shipment {}: {}",
+                payment.getPaymentId(), shipment.getShipmentId(), transactionId);
 
         return toPaymentResponse(savedPayment);
     }
 
-    /**
-     * Generate a fake transaction ID
-     */
     private String generateTransactionId() {
-        return "TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return TRANSACTION_PREFIX + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    /**
-     * Convert Payment entity to PaymentResponse DTO
-     */
+    private String extractLastFourDigits(String cardNumber) {
+        return cardNumber.substring(cardNumber.length() - CARD_LAST_DIGITS_LENGTH);
+    }
+
     private PaymentResponse toPaymentResponse(Payment payment) {
-        PaymentResponse response = new PaymentResponse();
-        response.setPaymentId(payment.getPaymentId());
-        response.setShipmentId(payment.getShipment().getShipmentId());
-        response.setTrackingNumber(payment.getShipment().getTrackingNumber());
-        response.setAmount(payment.getAmount());
-        response.setStatus(payment.getStatus());
-        response.setTransactionId(payment.getTransactionId());
-        response.setCardLastFourDigits(payment.getCardLastFourDigits());
-        response.setCreatedAt(payment.getCreatedAt());
-        response.setPaidAt(payment.getPaidAt());
-        return response;
+        return PaymentResponse.builder()
+                .paymentId(payment.getPaymentId())
+                .shipmentId(payment.getShipment().getShipmentId())
+                .trackingNumber(payment.getShipment().getTrackingNumber())
+                .amount(payment.getAmount())
+                .status(payment.getStatus())
+                .transactionId(payment.getTransactionId())
+                .cardLastFourDigits(payment.getCardLastFourDigits())
+                .createdAt(payment.getCreatedAt())
+                .paidAt(payment.getPaidAt())
+                .build();
     }
 }
-

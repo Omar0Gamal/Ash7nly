@@ -3,45 +3,38 @@ package com.ash7nly.monolith.controller;
 import com.ash7nly.monolith.dto.request.ProcessPaymentRequest;
 import com.ash7nly.monolith.dto.response.ApiResponse;
 import com.ash7nly.monolith.dto.response.PaymentResponse;
+import com.ash7nly.monolith.security.CurrentUserService;
 import com.ash7nly.monolith.service.PaymentService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/api/payments")
+@RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final CurrentUserService currentUserService;
 
-    @Autowired
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('MERCHANT', 'ADMIN')")
+    public ApiResponse<PaymentResponse> getPayment(@PathVariable Long id) {
+        return ApiResponse.success(paymentService.getPaymentById(id, currentUserService.getCurrentUserId()));
     }
 
-    /**
-     * Get payment details by payment ID
-     */
-    @GetMapping("/{paymentId}")
-    public ApiResponse<PaymentResponse> getPayment(@PathVariable Long paymentId) {
-        return ApiResponse.success(paymentService.getPaymentById(paymentId));
-    }
-
-    /**
-     * Get payment by shipment ID
-     */
     @GetMapping("/shipment/{shipmentId}")
+    @PreAuthorize("hasAnyAuthority('MERCHANT', 'ADMIN')")
     public ApiResponse<PaymentResponse> getPaymentByShipment(@PathVariable Long shipmentId) {
-        return ApiResponse.success(paymentService.getPaymentByShipmentId(shipmentId));
+        return ApiResponse.success(paymentService.getPaymentByShipmentId(shipmentId, currentUserService.getCurrentUserId()));
     }
 
-    /**
-     * Process payment - takes payment ID and card info, fakes transaction,
-     * marks shipment as paid making it available for drivers
-     */
-    @PostMapping("/process")
-    public ApiResponse<PaymentResponse> processPayment(@Valid @RequestBody ProcessPaymentRequest request) {
-        return ApiResponse.success(paymentService.processPayment(request), "Payment processed successfully");
+    @PostMapping("/{id}/process")
+    @PreAuthorize("hasAuthority('MERCHANT')")
+    public ApiResponse<PaymentResponse> processPayment(
+            @PathVariable Long id,
+            @Valid @RequestBody ProcessPaymentRequest request) {
+        return ApiResponse.success(paymentService.processPayment(id, request, currentUserService.getCurrentUserId()));
     }
 }
-

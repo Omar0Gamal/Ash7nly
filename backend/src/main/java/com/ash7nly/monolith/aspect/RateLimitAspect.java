@@ -24,20 +24,12 @@ public class RateLimitAspect {
         long windowStart;
     }
 
-    /**
-     * Key format: IP + method signature
-     */
     private final Map<String, RequestCounter> limits = new ConcurrentHashMap<>();
 
     @Around("@annotation(rateLimit)")
-    public Object enforceRateLimit(
-            ProceedingJoinPoint joinPoint,
-            RateLimit rateLimit
-    ) throws Throwable {
-
+    public Object enforceRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
         HttpServletRequest request = getCurrentRequest();
         String clientIp = getClientIp(request);
-
         String key = clientIp + ":" + joinPoint.getSignature().toLongString();
         long now = Instant.now().getEpochSecond();
 
@@ -45,9 +37,7 @@ public class RateLimitAspect {
         RequestCounter counter = limits.get(key);
 
         synchronized (counter) {
-            if (counter.windowStart == 0 ||
-                    now - counter.windowStart >= rateLimit.seconds()) {
-
+            if (counter.windowStart == 0 || now - counter.windowStart >= rateLimit.seconds()) {
                 counter.windowStart = now;
                 counter.count.set(0);
             }
@@ -75,15 +65,11 @@ public class RateLimitAspect {
         return attributes.getRequest();
     }
 
-    /**
-     * Handles proxies/load balancers
-     */
     private String getClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
             return forwarded.split(",")[0].trim();
         }
-
         String ip = request.getRemoteAddr();
         if ("0:0:0:0:0:0:0:1".equals(ip)) {
             return "127.0.0.1";

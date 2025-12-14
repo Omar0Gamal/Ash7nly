@@ -43,9 +43,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mail:
+        condition: service_healthy
 
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -99,6 +101,24 @@ services:
 
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - ash7nly-network
+
+  mail:
+    image: mailhog/mailhog
+    container_name: ash7nly-mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025/"]
       interval: 30s
       timeout: 10s
       retries: 3

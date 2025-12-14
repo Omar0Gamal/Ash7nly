@@ -1,15 +1,18 @@
 package com.ash7nly.monolith.service;
 
-import com.ash7nly.monolith.dto.request.*;
-import com.ash7nly.monolith.dto.response.CancelShipmentResponseDto;
-import com.ash7nly.monolith.dto.response.ShipmentCreatedResponse;
+import com.ash7nly.monolith.dto.request.CreateShipmentRequest;
+import com.ash7nly.monolith.dto.response.*;
 import com.ash7nly.monolith.enums.DeliveryArea;
 import com.ash7nly.monolith.enums.ShipmentStatus;
+import com.ash7nly.monolith.exception.ForbiddenException;
 import com.ash7nly.monolith.exception.NotFoundException;
+import com.ash7nly.monolith.exception.ShipmentNotCancellableException;
 import com.ash7nly.monolith.entity.*;
 import com.ash7nly.monolith.mapper.*;
 import com.ash7nly.monolith.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ash7nly.monolith.security.CurrentUserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,160 +20,190 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ShipmentService {
 
-    @Autowired
-    private ShipmentRepository shipmentRepository;
-    @Autowired
-    private ShipmentMapper shipmentMapper;
-    @Autowired
-    private TrackingMapper trackingMapper;
-    @Autowired
-    private TrackingHistoryRepository trackingHistoryRepository;
-    @Autowired
-    private DeliveryRepository deliveryRepository;
-    @Autowired
-    private NotificationService notificationService;
-    @Autowired
-    private PaymentService paymentService;
+    private final ShipmentRepository shipmentRepository;
+    private final ShipmentMapper shipmentMapper;
+    private final TrackingMapper trackingMapper;
+    private final TrackingHistoryRepository trackingHistoryRepository;
+    private final DeliveryRepository deliveryRepository;
+    private final NotificationService notificationService;
+    private final PaymentService paymentService;
+    private final CurrentUserService currentUserService;
+    private final UserRepository userRepository;
 
-
-    @Autowired
-    public ShipmentService(ShipmentRepository shipmentRepository, TrackingMapper trackingMapper, ShipmentMapper shipmentMapper, TrackingHistoryRepository trackingHistoryRepository, DeliveryRepository deliveryRepository, NotificationService notificationService) {
-
-    }
-
-    public ShipmentService() {
-    }
-
-    public TrackShipmentDTO TrackingInfo(String trackingNumber) {
-        ShipmentEntity shipment = shipmentRepository.findBytrackingNumber(trackingNumber)
-                .orElseThrow(() -> new NotFoundException(
-                        "Tracking Code not found"));
-        return trackingMapper.toDTO(shipment);
+    public TrackShipmentResponse getTrackingInfo(String trackingNumber) {
+        Shipment shipment = shipmentRepository.findByTrackingNumber(trackingNumber)
+                .orElseThrow(() -> new NotFoundException("Tracking code not found: " + trackingNumber));
+        return trackingMapper.toResponse(shipment);
     }
 
     @Transactional
-    public ShipmentCreatedResponse createShipment(CreateShipmentDTO request, Long merchantId) {
-        ShipmentEntity shipment = shipmentMapper.toEntity(request, merchantId);
-        // Set shipment as inactive until payment is completed
-        shipment.setActive(false);
-        ShipmentEntity saved = shipmentRepository.save(shipment);
+    public ShipmentCreatedResponse createShipment(CreateShipmentRequest request, Long merchantId) {
+        log.info("Creating shipment for merchant: {}", merchantId);
 
-        TrackingHistoryEntity history = new TrackingHistoryEntity();
-        history.setShipmentEntity(shipment);
+        User merchant = userRepository.findById(merchantId)
+                .orElseThrow(() -> new NotFoundException("Merchant not found with id: " + merchantId));
+
+        Shipment shipment = shipmentMapper.toEntity(request, merchant);
+        shipment.setActive(false);
+        Shipment saved = shipmentRepository.save(shipment);
+
+        TrackingHistory history = new TrackingHistory();
+        history.setShipment(shipment);
         history.setShipmentStatus(ShipmentStatus.CREATED);
         trackingHistoryRepository.save(history);
-
 
         Delivery delivery = new Delivery();
         delivery.setShipment(shipment);
         delivery.setRecipientName(shipment.getCustomerName());
+        delivery.setDriver(null);
         deliveryRepository.save(delivery);
         shipment = shipmentRepository.save(shipment);
 
-        // Create payment record for the shipment
         Payment savedPayment = paymentService.createPaymentForShipment(saved);
 
-        System.out.println("Attempting to send shipment created notification email for shipment: " + shipment.getTrackingNumber());
+        log.info("Shipment created with tracking number: {}", shipment.getTrackingNumber());
 
+        sendShipmentCreatedNotification(shipment);
 
+        return ShipmentCreatedResponse.builder()
+                .shipmentId(saved.getShipmentId())
+                .trackingNumber(saved.getTrackingNumber())
+                .pickupAddress(saved.getPickupAddress())
+                .deliveryAddress(saved.getDeliveryAddress())
+                .customerName(saved.getCustomerName())
+                .customerPhone(saved.getCustomerPhone())
+                .customerEmail(saved.getCustomerEmail())
+                .packageWeight(saved.getPackageWeight())
+                .packageDimension(saved.getPackageDimension())
+                .packageDescription(saved.getPackageDescription())
+                .merchantId(saved.getMerchant().getId())
+                .status(saved.getStatus())
+                .cost(saved.getCost())
+                .isActive(saved.isActive())
+                .createdAt(saved.getCreatedAt())
+                .paymentId(savedPayment.getPaymentId())
+                .paymentMessage("Payment record created successfully")
+                .build();
+    }
+
+    private void sendShipmentCreatedNotification(Shipment shipment) {
         try {
             String emailAddress = Objects.requireNonNullElse(
                     shipment.getCustomerEmail(),
                     "test@test.com"
             );
-
-            notificationService.sendShipmentCreatedNotification(
-                    shipment,
-                    emailAddress
-            );
+            notificationService.sendShipmentCreatedNotification(shipment, emailAddress);
+            log.info("Notification sent for shipment: {}", shipment.getTrackingNumber());
         } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
-
+            log.error("Failed to send notification for shipment {}: {}",
+                    shipment.getTrackingNumber(), e.getMessage());
         }
-
-
-        return new ShipmentCreatedResponse(saved, savedPayment.getPaymentId());
     }
 
+    @Transactional
+    public CancelShipmentResponse cancelShipment(Long shipmentId, Long merchantId, String reason) {
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new NotFoundException("Shipment not found"));
 
-    public CancelShipmentResponseDto cancelShipment(CancelShipmentRequestDto request) {
-        ShipmentEntity shipment = shipmentRepository.findByShipmentId(request.getId())
-                .orElseThrow(() -> new NotFoundException(
-                        "ShipmentEntity Not found"));
+        if (!currentUserService.isAdmin() && !shipment.getMerchant().getId().equals(merchantId)) {
+            throw new ForbiddenException("You can only cancel your own shipments");
+        }
 
-        if (shipment.getStatus() != ShipmentStatus.ASSIGNED &&
-                shipment.getStatus() != ShipmentStatus.CREATED) {
-            throw new RuntimeException("ShipmentEntity cannot be cancelled after pickup");
+        if (!shipment.isCancellable()) {
+            throw new ShipmentNotCancellableException("Shipment cannot be cancelled");
         }
 
         shipment.setStatus(ShipmentStatus.CANCELLED);
-        shipment.setCancellationReason(request.getCancellationReason());
-        shipment.setActive(false);
         shipmentRepository.save(shipment);
 
-
-        TrackingHistoryEntity history = new TrackingHistoryEntity();
-        history.setShipmentEntity(shipment);
-        history.setShipmentStatus(ShipmentStatus.CANCELLED);
-        trackingHistoryRepository.save(history);
-
-        return ShipmentMapper.toCancelResponse(shipment);
+        return new CancelShipmentResponse(shipmentId, shipment.getTrackingNumber(), "CANCELLED", "Shipment cancelled successfully");
     }
 
-    public UpdateShipmentDTO updateShipmentStatus(long shipmentId, ShipmentStatus newStatus) {
-        ShipmentEntity shipment = shipmentRepository.findByShipmentId(shipmentId)
-                .orElseThrow(() -> new NotFoundException("ShipmentEntity not found"));
+    @Transactional
+    public UpdateShipmentStatusResponse updateShipmentStatus(long shipmentId, ShipmentStatus newStatus) {
+        Shipment shipment = shipmentRepository.findByShipmentId(shipmentId)
+                .orElseThrow(() -> new NotFoundException("Shipment not found with id: " + shipmentId));
 
         shipment.setStatus(newStatus);
         shipment.setUpdatedAt(LocalDateTime.now());
-        ShipmentEntity savedShipment = shipmentRepository.save(shipment);
+        Shipment savedShipment = shipmentRepository.save(shipment);
 
-        // Save Tracking History
-        TrackingHistoryEntity history = new TrackingHistoryEntity();
-        history.setShipmentEntity(shipment); // <<< Foreign Key
+        TrackingHistory history = new TrackingHistory();
+        history.setShipment(shipment);
         history.setShipmentStatus(newStatus);
         trackingHistoryRepository.save(history);
 
-        return ShipmentMapper.toUpdateShipment(savedShipment);
-
+        log.info("Shipment {} status updated to {}", shipmentId, newStatus);
+        return shipmentMapper.toUpdateResponse(savedShipment);
     }
 
-    public ShipmentTrackingDTO getTrackingHistory(long id) {
-
-        ShipmentEntity shipment = shipmentRepository.findByShipmentId(id)
-                .orElseThrow(() -> new NotFoundException("ShipmentEntity not found"));
+    public ShipmentTrackingResponse getTrackingHistory(long id) {
+        Shipment shipment = shipmentRepository.findByShipmentId(id)
+                .orElseThrow(() -> new NotFoundException("Shipment not found with id: " + id));
 
         Delivery delivery = shipment.getDelivery();
 
-        List<TrackingHistoryDTO> trackingHistoryDTOS = trackingHistoryRepository.findByShipmentEntityOrderByTimestampAsc(shipment)
+        List<TrackingHistoryResponse> trackingHistoryList = trackingHistoryRepository
+                .findByShipmentOrderByTimestampAsc(shipment)
                 .stream()
-                .map(trackingMapper::toDTO)
+                .map(trackingMapper::toResponse)
                 .toList();
-        if(delivery == null || delivery.getDriver() == null){
-           return new ShipmentTrackingDTO(trackingHistoryDTOS, "n/a", "n/a", "n/a");
+
+        if (delivery == null || delivery.getDriver() == null) {
+            return ShipmentTrackingResponse.builder()
+                    .trackingHistoryList(trackingHistoryList)
+                    .driverPhone("N/A")
+                    .driverName("N/A")
+                    .driverEmail("N/A")
+                    .build();
         }
-        else {
-            Driver driver = delivery.getDriver();
-            return new ShipmentTrackingDTO(trackingHistoryDTOS, driver.getUser().getPhoneNumber(), driver.getUser().getFullName(), driver.getUser().getEmail());
+
+        Driver driver = delivery.getDriver();
+
+        if (driver == null || driver.getUser() == null) {
+            return ShipmentTrackingResponse.builder()
+                    .trackingHistoryList(trackingHistoryList)
+                    .driverPhone("N/A")
+                    .driverName("N/A")
+                    .driverEmail("N/A")
+                    .build();
         }
+
+        return ShipmentTrackingResponse.builder()
+                .trackingHistoryList(trackingHistoryList)
+                .driverPhone(driver.getUser().getPhoneNumber())
+                .driverName(driver.getUser().getFullName())
+                .driverEmail(driver.getUser().getEmail())
+                .build();
     }
 
-    public List<ShipmentListDTO> getShipmentsByServiceArea(DeliveryArea serviceArea) {
-        List<ShipmentEntity> shipments = shipmentRepository.findByDeliveryAdress(serviceArea);
+    public ShipmentListResponse getShipmentById(long shipmentId, Long requestingUserId) {
+        Shipment shipment = shipmentRepository.findByShipmentId(shipmentId)
+                .orElseThrow(() -> new NotFoundException("Shipment not found with id: " + shipmentId));
 
-        return shipments.stream()
-                .map(shipmentMapper::toDTO)
-                .toList();
+        if (!currentUserService.isAdmin() && !shipment.getMerchant().getId().equals(requestingUserId)) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        return shipmentMapper.toResponse(shipment);
     }
 
-
-    public ShipmentListDTO getShipmentById(long shipmentId) {
-        ShipmentEntity shipments = shipmentRepository.findByShipmentId(shipmentId)
-                .orElseThrow(() -> new NotFoundException("ShipmentEntity not Found"));
-        return shipmentMapper.toDTO(shipments);
+    @Transactional(readOnly = true)
+    public MerchantShipmentsResponse getShipmentsByMerchantId(long merchantId) {
+        List<Shipment> shipments = shipmentRepository.findByMerchant_Id(merchantId);
+        List<ShipmentListResponse> shipmentList = shipments.stream()
+                .map(shipmentMapper::toResponse)
+                .toList();
+        long count = shipmentRepository.countByMerchant_Id(merchantId);
+        return MerchantShipmentsResponse.builder()
+                .shipments(shipmentList)
+                .totalCount(count)
+                .build();
     }
 
 }

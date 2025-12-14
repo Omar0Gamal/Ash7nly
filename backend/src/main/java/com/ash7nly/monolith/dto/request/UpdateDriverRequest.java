@@ -1,73 +1,34 @@
 package com.ash7nly.monolith.dto.request;
 
 import com.ash7nly.monolith.enums.VehicleType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateDriverRequest {
 
     private VehicleType vehicleType;
+
+    @Size(min = 1, max = 20, message = "Vehicle number must be between 1 and 20 characters")
     private String vehicleNumber;
+
+    @Size(min = 1, max = 50, message = "License number must be between 1 and 50 characters")
     private String licenseNumber;
+
     private String serviceArea;
+
     private Boolean isAvailable;
+
+    @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
     private String fullName;
-    private  String email;
 
-    public UpdateDriverRequest() {
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public VehicleType getVehicleType() {
-        return vehicleType;
-    }
-
-    public void setVehicleType(VehicleType vehicleType) {
-        this.vehicleType = vehicleType;
-    }
-
-    public String getVehicleNumber() {
-        return vehicleNumber;
-    }
-
-    public void setVehicleNumber(String vehicleNumber) {
-        this.vehicleNumber = vehicleNumber;
-    }
-
-    public String getLicenseNumber() {
-        return licenseNumber;
-    }
-
-    public void setLicenseNumber(String licenseNumber) {
-        this.licenseNumber = licenseNumber;
-    }
-
-    public String getServiceArea() {
-        return serviceArea;
-    }
-
-    public void setServiceArea(String serviceArea) {
-        this.serviceArea = serviceArea;
-    }
-
-    public Boolean getIsAvailable() {
-        return isAvailable;
-    }
-
-    public void setIsAvailable(Boolean isAvailable) {
-        this.isAvailable = isAvailable;
-    }
+    @Email(message = "Invalid email format")
+    private String email;
 }
-

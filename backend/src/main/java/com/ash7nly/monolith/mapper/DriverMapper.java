@@ -1,6 +1,5 @@
 package com.ash7nly.monolith.mapper;
 
-import com.ash7nly.monolith.dto.request.CreateDriverRequest;
 import com.ash7nly.monolith.dto.request.UpdateDriverRequest;
 import com.ash7nly.monolith.dto.response.DriverResponse;
 import com.ash7nly.monolith.entity.Driver;
@@ -10,18 +9,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DriverMapper {
-
-    public Driver toEntity(CreateDriverRequest request, User user) {
-        Driver driver = new Driver();
-        driver.setUser(user);
-        driver.setVehicleType(request.getVehicleType());
-        driver.setVehicleNumber(request.getVehicleNumber());
-        driver.setLicenseNumber(request.getLicenseNumber());
-        driver.setServiceArea(request.getServiceArea());
-        driver.setAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true);
-        return driver;
-    }
-
     public DriverResponse toResponse(Driver driver) {
         if (driver == null) return null;
 
@@ -55,13 +42,11 @@ public class DriverMapper {
         }
     }
 
-
-
     public DriverResponse buildDriverResponse(Driver driver, User user) {
         DriverResponse response = new DriverResponse();
         response.setId(driver.getId());
         response.setUserId(user.getId());
-        response.setUsername(user. getUsername());
+        response.setUsername(user.getUsername());
         response.setFullName(user.getFullName());
         response.setEmail(user.getEmail());
         response.setVehicleType(driver.getVehicleType().toString());
@@ -72,4 +57,3 @@ public class DriverMapper {
         return response;
     }
 }
-

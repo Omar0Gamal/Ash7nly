@@ -8,20 +8,18 @@ import com.ash7nly.monolith.exception.NotFoundException;
 import com.ash7nly.monolith.mapper.UserMapper;
 import com.ash7nly.monolith.repository.UserRepository;
 import com.ash7nly.monolith.security.CurrentUserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
 
-    public UserService(UserRepository userRepository, CurrentUserService currentUserService) {
-        this.userRepository = userRepository;
-        this.currentUserService = currentUserService;
-    }
-
+    @Transactional(readOnly = true)
     public UserResponse getUserById(Long id) {
         Long currentUserId = currentUserService.getCurrentUserId();
 
@@ -35,6 +33,7 @@ public class UserService {
         return UserMapper.toResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getMyProfile() {
         Long userId = currentUserService.getCurrentUserId();
         User user = userRepository.findById(userId)
@@ -71,5 +70,17 @@ public class UserService {
 
         return UserMapper.toResponse(user);
     }
-}
 
+    @Transactional
+    public UserResponse updateCurrentUser(UserUpdateRequest request) {
+        Long currentUserId = currentUserService.getCurrentUserId();
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + currentUserId));
+
+        user.setFullName(request.getFullName());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        User updatedUser = userRepository.save(user);
+        return UserMapper.toResponse(updatedUser);
+    }
+}

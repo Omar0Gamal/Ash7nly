@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CurrentUserService {
 
-    public static User getCurrentUser() {
+    public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof User) {
             return (User) authentication.getPrincipal();
@@ -16,7 +16,7 @@ public class CurrentUserService {
         return null;
     }
 
-    public static Long getCurrentUserId() {
+    public Long getCurrentUserId() {
         User user = getCurrentUser();
         return user != null ? user.getId() : null;
     }
@@ -37,9 +37,4 @@ public class CurrentUserService {
     public boolean isDriver() {
         return "DRIVER".equals(getCurrentUserRole());
     }
-
-    public boolean isCustomer() {
-        return "CUSTOMER".equals(getCurrentUserRole());
-    }
 }
-
