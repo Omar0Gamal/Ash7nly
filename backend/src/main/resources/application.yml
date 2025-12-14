@@ -92,3 +92,15 @@ spring:
     url: jdbc:postgresql://postgres:5432/ash7nly_db
     username: admin
     password: password
+  mail:
+    host: mail
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+            debug: true
