@@ -142,7 +142,7 @@ public class ShipmentService {
                 .stream()
                 .map(trackingMapper::toDTO)
                 .toList();
-        if(delivery==null) {
+        if(delivery.getDriver()==null){
            return new ShipmentTrackingDTO(trackingHistoryDTOS,"n/a","n/a","n/a");
         }
         else {
