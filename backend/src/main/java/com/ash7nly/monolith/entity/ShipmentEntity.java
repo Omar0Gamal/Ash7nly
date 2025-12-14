@@ -45,7 +45,7 @@ public class ShipmentEntity {
     @Column(nullable = false)
     private Long merchantId;
 
-    @Lob
+    @Column(length = 1000)
     private String packageDescription;
 
     @Enumerated(EnumType.STRING)

@@ -17,6 +17,7 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
     @Query("SELECT s FROM ShipmentEntity s " +
             "WHERE s.deliveryAdress = (SELECT dr.serviceArea FROM Driver dr WHERE dr.id = :driverId) " +
+            "AND s.isActive = true " +
             "AND NOT EXISTS (" +
             "    SELECT 1 FROM Delivery d " +
             "    WHERE d.shipmentEntity. shipmentId = s.shipmentId " +

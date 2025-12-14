@@ -3,6 +3,7 @@ package com.ash7nly.monolith.controller;
 import com.ash7nly.monolith.dto.request.*;
 import com.ash7nly.monolith.dto.response.ApiResponse;
 import com.ash7nly.monolith.dto.response.CancelShipmentResponseDto;
+import com.ash7nly.monolith.dto.response.ShipmentCreatedResponse;
 import com.ash7nly.monolith.entity.ShipmentEntity;
 import com.ash7nly.monolith.enums.DeliveryArea;
 import com.ash7nly.monolith.security.CurrentUserService;
@@ -32,7 +33,7 @@ public class ShipmentController {
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('MERCHANT')")
-    public ApiResponse<ShipmentEntity> createShipment(@RequestBody CreateShipmentDTO request) {
+    public ApiResponse<ShipmentCreatedResponse> createShipment(@RequestBody CreateShipmentDTO request) {
         Long userId = Long.valueOf(CurrentUserService.getCurrentUserId());
         return ApiResponse.success(ShipmentService.createShipment(request, userId));
     }

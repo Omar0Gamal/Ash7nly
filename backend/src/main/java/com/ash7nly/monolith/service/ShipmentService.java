@@ -2,6 +2,7 @@ package com.ash7nly.monolith.service;
 
 import com.ash7nly.monolith.dto.request.*;
 import com.ash7nly.monolith.dto.response.CancelShipmentResponseDto;
+import com.ash7nly.monolith.dto.response.ShipmentCreatedResponse;
 import com.ash7nly.monolith.enums.DeliveryArea;
 import com.ash7nly.monolith.enums.ShipmentStatus;
 import com.ash7nly.monolith.exception.NotFoundException;
@@ -31,6 +32,8 @@ public class ShipmentService {
     private DeliveryRepository deliveryRepository;
     @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private PaymentService paymentService;
 
 
     @Autowired
@@ -49,8 +52,10 @@ public class ShipmentService {
     }
 
     @Transactional
-    public ShipmentEntity createShipment(CreateShipmentDTO request, Long merchantId) {
+    public ShipmentCreatedResponse createShipment(CreateShipmentDTO request, Long merchantId) {
         ShipmentEntity shipment = shipmentMapper.toEntity(request, merchantId);
+        // Set shipment as inactive until payment is completed
+        shipment.setActive(false);
         ShipmentEntity saved = shipmentRepository.save(shipment);
 
         TrackingHistoryEntity history = new TrackingHistoryEntity();
@@ -64,6 +69,9 @@ public class ShipmentService {
         delivery.setRecipientName(shipment.getCustomerName());
         deliveryRepository.save(delivery);
         shipment = shipmentRepository.save(shipment);
+
+        // Create payment record for the shipment
+        Payment savedPayment = paymentService.createPaymentForShipment(saved);
 
         System.out.println("Attempting to send shipment created notification email for shipment: " + shipment.getTrackingNumber());
 
@@ -84,7 +92,7 @@ public class ShipmentService {
         }
 
 
-        return saved;
+        return new ShipmentCreatedResponse(saved, savedPayment.getPaymentId());
     }
 
 

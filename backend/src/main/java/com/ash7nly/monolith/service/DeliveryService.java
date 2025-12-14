@@ -99,6 +99,7 @@ public class DeliveryService {
 
     // GET DELIVERIES FOR THE SAME SERVICE AREA OF THE DRIVER
 
+    @Transactional(readOnly = true)
     public List<ShipmentListDTO> getAvailableDeliveries() {
 
         Long userId = CurrentUserService. getCurrentUserId();
