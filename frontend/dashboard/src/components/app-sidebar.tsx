@@ -16,20 +16,37 @@ import {
   Settings,
   LogOut,
   Truck,
+  Users,
+  FileText,
 } from "lucide-react";
 import { Link } from "react-router";
+import { useAuthStore } from "@/stores/auth";
 
-const menuItems = [
+const merchantMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/merchant" },
   { icon: MapPin, label: "Tracking", href: "/tracking" },
   { icon: Package, label: "Shipments", href: "/merchant/shipments" },
 ];
 
+const adminMenuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: Users, label: "Drivers", href: "/admin/drivers" },
+  { icon: Package, label: "Shipments", href: "/admin/shipments" },
+  { icon: FileText, label: "Deliveries", href: "/admin/deliveries" },
+];
+
 export function AppSidebar() {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === "ADMIN";
+  const menuItems = isAdmin ? adminMenuItems : merchantMenuItems;
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-gray-200 p-4">
-        <Link to="/merchant" className="flex items-center gap-2">
+        <Link
+          to={isAdmin ? "/admin" : "/merchant"}
+          className="flex items-center gap-2"
+        >
           <div className="w-10 h-10 bg-[#ef4444] rounded-xl flex items-center justify-center shadow-sm">
             <Truck className="w-6 h-6 text-white" />
           </div>

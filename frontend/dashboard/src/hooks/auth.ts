@@ -17,7 +17,7 @@ export const useLogin = () => {
       const token = data.data.accessToken;
       localStorage.setItem("auth_token", token);
       setAuthState(true, data.data.user, token);
-      nav("/dashboard");
+      nav("/");
       showSuccess("Login successful!", "Welcome back to Ash7nly Dashboard");
     },
     onError: (error: any) => {
