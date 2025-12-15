@@ -47,7 +47,7 @@ public class ShipmentController {
         );
     }
 
-    @GetMapping("/{trackingNumber}/tracking")
+    @GetMapping("/track/{trackingNumber}")
     public ApiResponse<ShipmentTrackingResponse> getTrackingHistory(@PathVariable String trackingNumber) {
         return ApiResponse.success(shipmentService.getTrackingInfo(trackingNumber));
     }
