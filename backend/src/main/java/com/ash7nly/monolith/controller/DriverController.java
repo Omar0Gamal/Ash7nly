@@ -17,7 +17,6 @@ public class DriverController {
 
     private final DriverService driverService;
 
-
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<List<DriverResponse>> getAllDrivers() {

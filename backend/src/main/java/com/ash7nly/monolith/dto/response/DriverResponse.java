@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DriverResponse {
-
     private Long id;
     private Long userId;
     private String username;
     private String fullName;
+    private String phoneNumber;
     private String email;
     private String vehicleType;
     private String vehicleNumber;

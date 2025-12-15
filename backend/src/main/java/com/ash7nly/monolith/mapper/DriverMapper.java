@@ -17,6 +17,7 @@ public class DriverMapper {
         response.setEmail(driver.getUser() != null ? driver.getUser().getEmail() : null);
         response.setFullName(driver.getUser() != null ? driver.getUser().getFullName() : null);
         response.setUserId(driver.getUser() != null ? driver.getUser().getId() : null);
+        response.setPhoneNumber(String.valueOf(driver.getUser() != null ? driver.getUser().getPhoneNumber() : null));
         response.setVehicleType(driver.getVehicleType().toString());
         response.setVehicleNumber(driver.getVehicleNumber());
         response.setLicenseNumber(driver.getLicenseNumber());
