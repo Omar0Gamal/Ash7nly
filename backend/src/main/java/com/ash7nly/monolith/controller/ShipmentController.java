@@ -47,13 +47,8 @@ public class ShipmentController {
         );
     }
 
-    @GetMapping("/{id}/tracking")
-    public ApiResponse<ShipmentTrackingResponse> getTrackingHistory(@PathVariable long id) {
-        return ApiResponse.success(shipmentService.getTrackingHistory(id));
-    }
-
-    @GetMapping("/track/{trackingNumber}")
-    public ApiResponse<TrackShipmentResponse> trackShipment(@PathVariable String trackingNumber) {
+    @GetMapping("/{trackingNumber}/tracking")
+    public ApiResponse<ShipmentTrackingResponse> getTrackingHistory(@PathVariable String trackingNumber) {
         return ApiResponse.success(shipmentService.getTrackingInfo(trackingNumber));
     }
 }

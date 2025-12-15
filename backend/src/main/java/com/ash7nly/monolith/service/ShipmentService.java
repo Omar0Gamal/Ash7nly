@@ -35,10 +35,42 @@ public class ShipmentService {
     private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
 
-    public TrackShipmentResponse getTrackingInfo(String trackingNumber) {
+    public ShipmentTrackingResponse getTrackingInfo(String trackingNumber) {
         Shipment shipment = shipmentRepository.findByTrackingNumber(trackingNumber)
                 .orElseThrow(() -> new NotFoundException("Tracking code not found: " + trackingNumber));
-        return trackingMapper.toResponse(shipment);
+        Delivery delivery = shipment.getDelivery();
+
+        List<TrackingHistoryResponse> trackingHistoryList = trackingHistoryRepository
+                .findByShipmentOrderByTimestampAsc(shipment)
+                .stream()
+                .map(trackingMapper::toResponse)
+                .toList();
+
+        if (delivery == null || delivery.getDriver() == null) {
+            return ShipmentTrackingResponse.builder()
+                    .trackingHistoryList(trackingHistoryList)
+                    .driverPhone("N/A")
+                    .driverName("N/A")
+                    .driverEmail("N/A")
+                    .build();
+        }
+
+        Driver driver = delivery.getDriver();
+        if (driver == null || driver.getUser() == null) {
+            return ShipmentTrackingResponse.builder()
+                    .trackingHistoryList(trackingHistoryList)
+                    .driverPhone("N/A")
+                    .driverName("N/A")
+                    .driverEmail("N/A")
+                    .build();
+        }
+
+        return ShipmentTrackingResponse.builder()
+                .trackingHistoryList(trackingHistoryList)
+                .driverPhone(driver.getUser().getPhoneNumber())
+                .driverName(driver.getUser().getFullName())
+                .driverEmail(driver.getUser().getEmail())
+                .build();
     }
 
     @Transactional
@@ -140,46 +172,6 @@ public class ShipmentService {
 
         log.info("Shipment {} status updated to {}", shipmentId, newStatus);
         return shipmentMapper.toUpdateResponse(savedShipment);
-    }
-
-    public ShipmentTrackingResponse getTrackingHistory(long id) {
-        Shipment shipment = shipmentRepository.findByShipmentId(id)
-                .orElseThrow(() -> new NotFoundException("Shipment not found with id: " + id));
-
-        Delivery delivery = shipment.getDelivery();
-
-        List<TrackingHistoryResponse> trackingHistoryList = trackingHistoryRepository
-                .findByShipmentOrderByTimestampAsc(shipment)
-                .stream()
-                .map(trackingMapper::toResponse)
-                .toList();
-
-        if (delivery == null || delivery.getDriver() == null) {
-            return ShipmentTrackingResponse.builder()
-                    .trackingHistoryList(trackingHistoryList)
-                    .driverPhone("N/A")
-                    .driverName("N/A")
-                    .driverEmail("N/A")
-                    .build();
-        }
-
-        Driver driver = delivery.getDriver();
-
-        if (driver == null || driver.getUser() == null) {
-            return ShipmentTrackingResponse.builder()
-                    .trackingHistoryList(trackingHistoryList)
-                    .driverPhone("N/A")
-                    .driverName("N/A")
-                    .driverEmail("N/A")
-                    .build();
-        }
-
-        return ShipmentTrackingResponse.builder()
-                .trackingHistoryList(trackingHistoryList)
-                .driverPhone(driver.getUser().getPhoneNumber())
-                .driverName(driver.getUser().getFullName())
-                .driverEmail(driver.getUser().getEmail())
-                .build();
     }
 
     public ShipmentListResponse getShipmentById(long shipmentId, Long requestingUserId) {
